@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de controle de estoque de equipamentos de TI">
+  <title>Estoque TI | Controle de Equipamentos</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js" defer></script>
+  <script src="app.js?v=auth-final-20260928-2" defer></script>
+</head>
+<body>
+  <noscript>Ative o JavaScript para entrar no sistema de estoque.</noscript>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <div id="loading-screen" class="loading-screen hidden" aria-hidden="true">
+    <div class="spinner"></div>
+    <p>Carregando dados...</p>
+  </div>
+
+  <!-- LOGIN -->
+  <main id="login-screen" class="login-screen">
+    <section class="login-layout" aria-label="Acesso ao sistema">
+      <div class="login-info">
+        <div class="brand brand-login">
+          <div class="brand-mark">ET</div>
+          <div>
+            <strong>Estoque TI</strong>
+            <span>Controle de equipamentos</span>
+          </div>
+        </div>
+
+        <div class="login-copy">
+          <p class="section-kicker">ACESSO INTERNO</p>
+          <h1>Controle simples do estoque de tecnologia.</h1>
+          <p>Cadastre equipamentos, consulte responsáveis e acompanhe o histórico de movimentações em um só lugar.</p>
+        </div>
+
+        <div class="login-note">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Acesso protegido pela autenticação do Supabase.</span>
+        </div>
+      </div>
+
+      <div class="login-form-area">
+        <div class="login-box">
+          <div class="login-heading">
+            <span class="login-badge"><i class="fa-solid fa-lock"></i></span>
+            <div>
+              <p class="section-kicker">LOGIN</p>
+              <h2>Entrar no sistema</h2>
+            </div>
+          </div>
+
+          <form id="login-form" autocomplete="on">
+            <div class="input-group">
+              <label for="login-email">E-mail</label>
+              <input id="login-email" name="email" type="email" placeholder="nome@empresa.com" autocomplete="email" required>
+            </div>
+
+            <div class="input-group">
+              <label for="login-password">Senha</label>
+              <div class="password-field">
+                <input id="login-password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+                <button id="btn-toggle-password" class="icon-button" type="button" aria-label="Mostrar ou ocultar senha">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <button id="btn-login" class="btn btn-primary btn-full" type="submit">
+              Entrar
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <div class="login-divider"><span>ou</span></div>
+            <button id="btn-google" class="btn btn-google btn-full" type="button">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36z"/>
+                <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.97-3.38.97-2.61 0-4.82-1.76-5.61-4.12H3.05v2.59A10 10 0 0 0 12 22z"/>
+                <path fill="#FBBC05" d="M6.39 13.93a6 6 0 0 1 0-3.86V7.48H3.05a10 10 0 0 0 0 9.04l3.34-2.59z"/>
+                <path fill="#EA4335" d="M12 5.95c1.47 0 2.79.51 3.83 1.5l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.95 5.48l3.34 2.59C7.18 7.71 9.39 5.95 12 5.95z"/>
+              </svg>
+              <span>Entrar com Google</span>
+            </button>
+
+            <p class="login-help">Entre com seu e-mail e senha ou use sua conta Google autorizada.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- APLICAÇÃO -->
+  <div id="app-screen" class="app-shell hidden" inert>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">ET</div>
+        <div class="brand-text">
+          <strong>Estoque TI</strong>
+          <span>Painel interno</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação principal">
+        <a class="nav-item active" href="#dashboard">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Visão geral</span>
+        </a>
+        <a class="nav-item" href="#cadastro">
+          <i class="fa-solid fa-square-plus"></i>
+          <span>Novo equipamento</span>
+        </a>
+        <a class="nav-item" href="#estoque">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Estoque</span>
+        </a>
+        <button id="btn-historico" class="nav-item nav-button" type="button">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Histórico</span>
+        </button>
+        <button id="btn-export" class="nav-item nav-button" type="button">
+          <i class="fa-solid fa-file-arrow-down"></i>
+          <span>Exportar CSV</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="user-info">
+            <span>Usuário conectado</span>
+            <strong id="user-display">Usuário</strong>
+          </div>
+        </div>
+
+        <button id="btn-logout" data-logout class="sidebar-logout" type="button">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <p class="section-kicker">CONTROLE DE ESTOQUE</p>
+          <h1>Equipamentos de TI</h1>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="btn-logout-mobile" data-logout class="btn btn-secondary mobile-logout" type="button" aria-label="Sair da conta">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Sair</span>
+          </button>
+          <button id="btn-darkmode" class="btn btn-secondary" type="button" title="Alternar tema">
+            <i class="fa-solid fa-moon"></i>
+            <span class="button-text">Tema</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="content" id="dashboard">
+        <section class="page-intro">
+          <div>
+            <p class="section-kicker">VISÃO GERAL</p>
+            <h2>Resumo do estoque</h2>
+            <p>Acompanhe a situação atual dos equipamentos cadastrados.</p>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Resumo do estoque">
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Total cadastrado</span>
+              <i class="fa-solid fa-box"></i>
+            </div>
+            <strong id="total-count">0</strong>
+            <small>equipamentos registrados</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Disponíveis</span>
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <strong id="disponivel-count">0</strong>
+            <small>prontos para utilização</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Em uso</span>
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <strong id="em-uso-count">0</strong>
+            <small>vinculados a responsáveis</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top">
+              <span>Manutenção</span>
+              <i class="fa-solid fa-screwdriver-wrench"></i>
+            </div>
+            <strong id="manutencao-count">0</strong>
+            <small>aguardando atendimento</small>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <section id="cadastro" class="panel form-panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">CADASTRO</p>
+                <h2>Novo equipamento</h2>
+                <p>Preencha os dados principais do item.</p>
+              </div>
+              <div class="panel-header-icon"><i class="fa-solid fa-plus"></i></div>
+            </div>
+
+            <form id="add-form">
+              <div class="input-group">
+                <label for="patrimonio">Patrimônio <span>*</span></label>
+                <input id="patrimonio" name="patrimonio" type="text" inputmode="numeric" minlength="5" maxlength="7" pattern="[0-9]{5,7}" placeholder="Ex.: 12345" required>
+              </div>
+
+              <div class="input-group">
+                <label for="nome">Nome do equipamento <span>*</span></label>
+                <input id="nome" name="nome" type="text" maxlength="120" placeholder="Ex.: Notebook Dell Latitude" required>
+              </div>
+
+              <div class="form-row">
+                <div class="input-group">
+                  <label for="categoria">Categoria <span>*</span></label>
+                  <select id="categoria" name="categoria" required></select>
+                </div>
+
+                <div class="input-group">
+                  <label for="status">Status <span>*</span></label>
+                  <select id="status" name="status" required></select>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label for="responsavel">Responsável</label>
+                <input id="responsavel" name="responsavel" type="text" maxlength="120" placeholder="Nome do responsável pelo item">
+              </div>
+
+              <div class="input-group">
+                <label for="descricao">Observações</label>
+                <textarea id="descricao" name="descricao" rows="4" maxlength="500" placeholder="Setor, configuração, estado do equipamento..."></textarea>
+              </div>
+
+              <button class="btn btn-primary btn-full" type="submit">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Cadastrar equipamento
+              </button>
+            </form>
+          </section>
+
+          <section id="estoque" class="panel list-panel">
+            <div class="panel-header panel-header-list">
+              <div>
+                <p class="section-kicker">ESTOQUE</p>
+                <h2>Equipamentos cadastrados</h2>
+                <p>Consulte, filtre e edite os registros existentes.</p>
+              </div>
+            </div>
+
+            <div class="toolbar">
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <label class="sr-only" for="search">Pesquisar equipamentos</label>
+                <input id="search" type="search" placeholder="Buscar por patrimônio, nome ou responsável">
+              </div>
+
+              <div class="filters">
+                <label class="sr-only" for="filter-categoria">Filtrar por categoria</label>
+                <select id="filter-categoria">
+                  <option value="">Todas as categorias</option>
+                </select>
+
+                <label class="sr-only" for="filter-status">Filtrar por status</label>
+                <select id="filter-status">
+                  <option value="">Todos os status</option>
+                </select>
+
+                <button id="btn-clear-filters" class="btn btn-secondary btn-icon-text" type="button" title="Limpar filtros">
+                  <i class="fa-solid fa-filter-circle-xmark"></i>
+                  <span>Limpar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-meta">
+              <p id="results-summary">0 itens encontrados</p>
+            </div>
+
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th><button class="sort-button" type="button" data-field="patrimonio">Patrimônio <i class="fa-solid fa-sort"></i></button></th>
+                    <th><button class="sort-button" type="button" data-field="nome">Equipamento <i class="fa-solid fa-sort"></i></button></th>
+                    <th><button class="sort-button" type="button" data-field="categoria">Categoria <i class="fa-solid fa-sort"></i></button></th>
+                    <th><button class="sort-button" type="button" data-field="status">Status <i class="fa-solid fa-sort"></i></button></th>
+                    <th>Responsável</th>
+                    <th>Cadastro</th>
+                    <th class="actions-column">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+              </table>
+            </div>
+
+            <div id="empty-state" class="empty-state hidden">
+              <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+              <h3>Nenhum equipamento encontrado</h3>
+              <p>Cadastre um item novo ou altere os filtros aplicados.</p>
+            </div>
+
+            <div class="pagination">
+              <button id="btn-prev" class="btn btn-secondary" type="button">
+                <i class="fa-solid fa-chevron-left"></i>
+                Anterior
+              </button>
+              <span id="page-info">Página 1 de 1</span>
+              <button id="btn-next" class="btn btn-secondary" type="button">
+                Próxima
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL DE EDIÇÃO -->
+  <div id="edit-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal-backdrop" data-close="edit-modal"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p class="section-kicker">EDIÇÃO</p>
+          <h2 id="edit-modal-title">Editar equipamento</h2>
+        </div>
+        <button class="icon-button" type="button" data-close="edit-modal" aria-label="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="edit-form">
+        <input id="edit-id" type="hidden">
+
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="edit-patrimonio">Patrimônio <span>*</span></label>
+            <input id="edit-patrimonio" type="text" inputmode="numeric" minlength="5" maxlength="7" pattern="[0-9]{5,7}" required>
+          </div>
+
+          <div class="input-group">
+            <label for="edit-nome">Nome <span>*</span></label>
+            <input id="edit-nome" type="text" maxlength="120" required>
+          </div>
+
+          <div class="input-group">
+            <label for="edit-categoria">Categoria <span>*</span></label>
+            <select id="edit-categoria" required></select>
+          </div>
+
+          <div class="input-group">
+            <label for="edit-status">Status <span>*</span></label>
+            <select id="edit-status" required></select>
+          </div>
+
+          <div class="input-group full-span">
+            <label for="edit-responsavel">Responsável</label>
+            <input id="edit-responsavel" type="text" maxlength="120">
+          </div>
+
+          <div class="input-group full-span">
+            <label for="edit-descricao">Observações</label>
+            <textarea id="edit-descricao" rows="4" maxlength="500"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" type="button" data-close="edit-modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Salvar alterações
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE HISTÓRICO -->
+  <div id="history-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="modal-backdrop" data-close="history-modal"></div>
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <div>
+          <p class="section-kicker">AUDITORIA</p>
+          <h2 id="history-modal-title">Histórico de movimentações</h2>
+          <p class="modal-subtitle">Alterações registradas automaticamente pelo sistema.</p>
+        </div>
+        <button class="icon-button" type="button" data-close="history-modal" aria-label="Fechar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="table-responsive history-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Patrimônio</th>
+              <th>Ação</th>
+              <th>Campo</th>
+              <th>Antes</th>
+              <th>Depois</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+
+      <div id="history-empty" class="empty-state hidden">
+        <div class="empty-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <h3>Sem movimentações</h3>
+        <p>As alterações realizadas no estoque aparecerão aqui.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
